@@ -17,3 +17,7 @@ function extractNumber(value) {
   const digits = String(value).match(/\d/g);
   return digits ? Number(digits.join('')) : NaN;
 }
+
+window.isLengthWithin = isLengthWithin;
+window.isPalindrome  = isPalindrome;
+window.extractNumber = extractNumber;
