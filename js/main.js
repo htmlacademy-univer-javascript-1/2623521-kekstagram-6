@@ -1,6 +1,9 @@
-import { showMessage } from './util.js';
-import { fetchData } from './data.js';
+import { createPhotos } from './data.js';
 
-// Llamada a las funciones importadas
-const data = fetchData();
-showMessage("Los datos son: " + data);
+function init() {
+  const photos = createPhotos(25);
+
+  console.log('Fotos generadas:', photos);
+}
+
+init();
