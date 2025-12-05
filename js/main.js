@@ -26,6 +26,13 @@ const closeButton = bigPictureElement.querySelector('.big-picture__cancel');
 const commentsCountBlock = bigPictureElement.querySelector('.social__comment-count');
 const commentsLoader = bigPictureElement.querySelector('.comments-loader');
 
+// cuántos comentarios mostramos cada vez
+const COMMENTS_PER_PORTION = 5;
+
+// estado actual de los comentarios de la foto abierta
+let currentComments = [];
+let renderedCommentsCount = 0;
+
 // ---------- COMENTARIOS EN LA FOTO GRANDE ----------
 
 const clearComments = () => {
@@ -38,29 +45,64 @@ const createCommentElement = (comment) => {
 
   const avatarElement = document.createElement('img');
   avatarElement.classList.add('social__picture');
-  avatarElement.src = comment.avatar;      // viene de data.js
-  avatarElement.alt = comment.name;        // viene de data.js
+  avatarElement.src = comment.avatar;
+  avatarElement.alt = comment.name;
   avatarElement.width = 35;
   avatarElement.height = 35;
 
   const textElement = document.createElement('p');
   textElement.classList.add('social__text');
-  textElement.textContent = comment.message; // viene de data.js
+  textElement.textContent = comment.message;
 
   li.append(avatarElement, textElement);
   return li;
 };
 
-const renderComments = (comments) => {
-  clearComments();
+const updateCommentsCounter = () => {
+  // texto tipo "5 из 20 комментариев"
+  commentsCountBlock.textContent = `${renderedCommentsCount} из ${currentComments.length} комментариев`;
+};
+
+const showNextComments = () => {
   const fragment = document.createDocumentFragment();
 
-  comments.forEach((comment) => {
-    fragment.append(createCommentElement(comment));
-  });
+  const start = renderedCommentsCount;
+  const end = Math.min(start + COMMENTS_PER_PORTION, currentComments.length);
+
+  for (let i = start; i < end; i++) {
+    const commentElement = createCommentElement(currentComments[i]);
+    fragment.append(commentElement);
+  }
 
   commentsListElement.append(fragment);
+
+  renderedCommentsCount = end;
+  updateCommentsCounter();
+
+  // si ya mostramos todos, escondemos el botón
+  if (renderedCommentsCount >= currentComments.length) {
+    commentsLoader.classList.add('hidden');
+  }
 };
+
+const renderComments = (comments) => {
+  currentComments = comments;
+  clearComments();
+  renderedCommentsCount = 0;
+
+  // mostramos el contador y el botón
+  commentsCountBlock.classList.remove('hidden');
+  commentsLoader.classList.remove('hidden');
+
+  // total de comentarios en el span .comments-count
+  commentsCountElement.textContent = currentComments.length;
+
+  // pintamos la primera tanda
+  showNextComments();
+};
+
+// al hacer click en "Загрузить ещё" mostramos más
+commentsLoader.addEventListener('click', showNextComments);
 
 // ---------- ABRIR / CERRAR FOTO GRANDE ----------
 
@@ -76,14 +118,9 @@ function openBigPicture(photo) {
   bigPictureImg.alt = photo.description;
 
   likesCountElement.textContent = photo.likes;
-  commentsCountElement.textContent = photo.comments.length;
   descriptionElement.textContent = photo.description;
 
   renderComments(photo.comments);
-
-  // según la tarea, ocultar contador y botón de cargar comentarios
-  commentsCountBlock.classList.add('hidden');
-  commentsLoader.classList.add('hidden');
 
   bigPictureElement.classList.remove('hidden');
   document.body.classList.add('modal-open');
@@ -94,6 +131,10 @@ function openBigPicture(photo) {
 function closeBigPicture() {
   bigPictureElement.classList.add('hidden');
   document.body.classList.remove('modal-open');
+
+  // al cerrar volvemos a ocultar contador y botón
+  commentsCountBlock.classList.add('hidden');
+  commentsLoader.classList.add('hidden');
 
   document.removeEventListener('keydown', onDocumentKeydown);
 }
