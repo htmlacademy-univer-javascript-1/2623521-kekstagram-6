@@ -1,3 +1,5 @@
+// js/upload-form.js
+
 const body = document.body;
 
 const form = document.querySelector('.img-upload__form');
@@ -100,25 +102,25 @@ const hasValidCommentLength = (value) => value.length <= COMMENT_MAX_LENGTH;
 pristine.addValidator(
   hashtagsField,
   hasValidHashtags,
-  'Хэш-тег должен начинаться с #, содержать только буквы и цифры и быть не длиннее 20 символов'
+  'Хэш-тег должен начинаться с #, содержать только буквы и цифры и быть не длиннее 20 символов',
 );
 
 pristine.addValidator(
   hashtagsField,
   hasValidCount,
-  'Нельзя указать больше пяти хэш-тегов'
+  'Нельзя указать больше пяти хэш-тегов',
 );
 
 pristine.addValidator(
   hashtagsField,
   hasUniqueHashtags,
-  'Хэш-теги не должны повторяться'
+  'Хэш-теги не должны повторяться',
 );
 
 pristine.addValidator(
   commentField,
   hasValidCommentLength,
-  'Комментарий не может быть длиннее 140 символов'
+  'Комментарий не может быть длиннее 140 символов',
 );
 
 // ----------  Обработка отправки формы  ----------

@@ -1,6 +1,7 @@
 import { getRandomInt, getRandomArrayElement } from './util.js';
 
 const NAMES = ['Анна', 'Мария', 'Иван', 'Павел', 'София', 'Олег', 'Елена'];
+
 const MESSAGES = [
   'Отлично!',
   'Супер',
