@@ -1,4 +1,6 @@
-import { createPhotos } from './data.js';
+// js/main.js
+import './upload-form.js';          // модуль с формой
+import { createPhotos } from './data.js';  // данные для фотографий
 
 // ---------- DATOS ----------
 
@@ -59,7 +61,6 @@ const createCommentElement = (comment) => {
 };
 
 const updateCommentsCounter = () => {
-  // texto tipo "5 из 20 комментариев"
   commentsCountBlock.textContent = `${renderedCommentsCount} из ${currentComments.length} комментариев`;
 };
 
@@ -79,7 +80,6 @@ const showNextComments = () => {
   renderedCommentsCount = end;
   updateCommentsCounter();
 
-  // si ya mostramos todos, escondemos el botón
   if (renderedCommentsCount >= currentComments.length) {
     commentsLoader.classList.add('hidden');
   }
@@ -90,18 +90,14 @@ const renderComments = (comments) => {
   clearComments();
   renderedCommentsCount = 0;
 
-  // mostramos el contador y el botón
   commentsCountBlock.classList.remove('hidden');
   commentsLoader.classList.remove('hidden');
 
-  // total de comentarios en el span .comments-count
   commentsCountElement.textContent = currentComments.length;
 
-  // pintamos la primera tanda
   showNextComments();
 };
 
-// al hacer click en "Загрузить ещё" mostramos más
 commentsLoader.addEventListener('click', showNextComments);
 
 // ---------- ABRIR / CERRAR FOTO GRANDE ----------
@@ -132,7 +128,6 @@ function closeBigPicture() {
   bigPictureElement.classList.add('hidden');
   document.body.classList.remove('modal-open');
 
-  // al cerrar volvemos a ocultar contador y botón
   commentsCountBlock.classList.add('hidden');
   commentsLoader.classList.add('hidden');
 
