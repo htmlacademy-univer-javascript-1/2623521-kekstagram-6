@@ -1,5 +1,3 @@
-// js/upload-form.js
-
 const body = document.body;
 
 const form = document.querySelector('.img-upload__form');
@@ -8,6 +6,15 @@ const overlay = document.querySelector('.img-upload__overlay');
 const cancelButton = overlay.querySelector('.img-upload__cancel');
 const hashtagsField = form.querySelector('.text__hashtags');
 const commentField = form.querySelector('.text__description');
+
+// ----------  Валидация через Pristine  ----------
+
+const pristine = new Pristine(form, {
+  classTo: 'img-upload__field-wrapper',
+  errorTextParent: 'img-upload__field-wrapper',
+  errorTextTag: 'p',
+  errorTextClass: 'img-upload__error',
+});
 
 // ----------  Работа с окном (overlay)  ----------
 
@@ -49,15 +56,6 @@ uploadFileField.addEventListener('change', () => {
 
 cancelButton.addEventListener('click', () => {
   closeOverlay();
-});
-
-// ----------  Валидация через Pristine  ----------
-
-const pristine = new Pristine(form, {
-  classTo: 'img-upload__field-wrapper',
-  errorTextParent: 'img-upload__field-wrapper',
-  errorTextTag: 'p',
-  errorTextClass: 'img-upload__error',
 });
 
 // ---- Правила для хэштегов ----

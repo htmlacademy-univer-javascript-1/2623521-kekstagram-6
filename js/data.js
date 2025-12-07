@@ -13,6 +13,7 @@ const MESSAGES = [
   'Классное фото',
   'Шикарно'
 ];
+
 const DESCRIPTIONS = ['Моё фото', 'Котик', 'Отпуск', 'Вид из окна', 'Рабочий день'];
 
 const createComment = (id) => ({
@@ -28,9 +29,9 @@ const createPhoto = (id) => ({
   description: getRandomArrayElement(DESCRIPTIONS),
   likes: getRandomInt(15, 200),
   comments: Array.from(
-  { length: getRandomInt(10, 20) }, // entre 10 y 20 comentarios
-  (_, i) => createComment(id * 10 + i + 1),
-),
+    { length: getRandomInt(10, 20) }, // entre 10 y 20 comentarios
+    (_, i) => createComment(id * 10 + i + 1),
+  ),
 });
 
 export const createPhotos = (count = 25) =>
