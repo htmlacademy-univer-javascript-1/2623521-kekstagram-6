@@ -1,6 +1,6 @@
 // js/main.js
-import './upload-form.js';          // модуль с формой
-import { createPhotos } from './data.js';  // данные для фотографий
+import './upload-form.js';                 // módulo con la forma
+import { createPhotos } from './data.js';  // datos para las fotos
 
 // ---------- DATOS ----------
 
