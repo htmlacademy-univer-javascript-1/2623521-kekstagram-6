@@ -1,4 +1,6 @@
-/* global noUiSlider */
+/* global Pristine, noUiSlider */
+
+// js/upload-form.js
 
 const body = document.body;
 
@@ -20,6 +22,167 @@ const effectsList = form.querySelector('.effects__list');
 const effectLevelContainer = form.querySelector('.img-upload__effect-level');
 const effectLevelSlider = form.querySelector('.effect-level__slider');
 const effectValueField = form.querySelector('.effect-level__value');
+
+// ----------  Escala (scale)  ----------
+
+const MIN_SCALE = 25;
+const MAX_SCALE = 100;
+const STEP_SCALE = 25;
+
+const smallerButton = overlay.querySelector('.scale__control--smaller');
+const biggerButton = overlay.querySelector('.scale__control--bigger');
+const scaleValueInput = overlay.querySelector('.scale__control--value');
+const previewImage = overlay.querySelector('.img-upload__preview img');
+
+let currentScale = MAX_SCALE;
+
+const applyScale = (value) => {
+  currentScale = value;
+  scaleValueInput.value = `${value}%`;
+  previewImage.style.transform = `scale(${value / 100})`;
+};
+
+const onSmallerClick = () => applyScale(Math.max(MIN_SCALE, currentScale - STEP_SCALE));
+const onBiggerClick = () => applyScale(Math.min(MAX_SCALE, currentScale + STEP_SCALE));
+
+const resetScale = () => applyScale(MAX_SCALE);
+
+const initScale = () => {
+  smallerButton.addEventListener('click', onSmallerClick);
+  biggerButton.addEventListener('click', onBiggerClick);
+  resetScale();
+};
+
+// ----------  Efectos + noUiSlider  ----------
+
+const effectLevel = overlay.querySelector('.img-upload__effect-level');
+const sliderElement = effectLevel.querySelector('.effect-level__slider');
+const effectValueInput = effectLevel.querySelector('.effect-level__value');
+const effectsContainer = overlay.querySelector('.effects__list');
+
+const EFFECTS = {
+  none: {
+    hideSlider: true,
+    min: 0,
+    max: 100,
+    start: 100,
+    step: 1,
+    getFilter: () => '',
+  },
+  chrome: {
+    hideSlider: false,
+    min: 0,
+    max: 1,
+    start: 1,
+    step: 0.1,
+    getFilter: (v) => `grayscale(${v})`,
+  },
+  sepia: {
+    hideSlider: false,
+    min: 0,
+    max: 1,
+    start: 1,
+    step: 0.1,
+    getFilter: (v) => `sepia(${v})`,
+  },
+  marvin: {
+    hideSlider: false,
+    min: 0,
+    max: 100,
+    start: 100,
+    step: 1,
+    getFilter: (v) => `invert(${v}%)`,
+  },
+  phobos: {
+    hideSlider: false,
+    min: 0,
+    max: 3,
+    start: 3,
+    step: 0.1,
+    getFilter: (v) => `blur(${v}px)`,
+  },
+  heat: {
+    hideSlider: false,
+    min: 1,
+    max: 3,
+    start: 3,
+    step: 0.1,
+    getFilter: (v) => `brightness(${v})`,
+  },
+};
+
+let currentEffect = 'none';
+
+const setSliderVisibility = (hide) => {
+  effectLevel.classList.toggle('hidden', hide);
+};
+
+const applyEffect = (effectName) => {
+  currentEffect = effectName in EFFECTS ? effectName : 'none';
+  const config = EFFECTS[currentEffect];
+
+  setSliderVisibility(config.hideSlider);
+
+  // Reset al cambiar de efecto (nivel vuelve al inicio/100%)
+  sliderElement.noUiSlider.updateOptions(
+    {
+      range: { min: config.min, max: config.max },
+      step: config.step,
+    },
+    false
+  );
+
+  sliderElement.noUiSlider.set(config.start);
+};
+
+const onSliderUpdate = () => {
+  const config = EFFECTS[currentEffect];
+  const value = Number(sliderElement.noUiSlider.get());
+
+  effectValueInput.value = value;
+  previewImage.style.filter = config.getFilter(value);
+};
+
+const resetEffects = () => {
+  previewImage.style.filter = '';
+  effectValueInput.value = 100;
+
+  const noneRadio = overlay.querySelector('input[name="effect"][value="none"]');
+  if (noneRadio) {
+    noneRadio.checked = true;
+  }
+
+  applyEffect('none');
+};
+
+const initEffects = () => {
+  if (!window.noUiSlider) {
+    throw new Error('noUiSlider no está cargado. Revisa vendor/nouislider/nouislider.js');
+  }
+
+  if (!sliderElement.noUiSlider) {
+    noUiSlider.create(sliderElement, {
+      range: { min: 0, max: 100 },
+      start: 100,
+      step: 1,
+      connect: 'lower',
+    });
+
+    sliderElement.noUiSlider.on('update', onSliderUpdate);
+  }
+
+  effectsContainer.addEventListener('change', (evt) => {
+    if (evt.target.matches('input[type="radio"][name="effect"]')) {
+      applyEffect(evt.target.value);
+
+      if (evt.target.value === 'none') {
+        previewImage.style.filter = '';
+      }
+    }
+  });
+
+  resetEffects();
+};
 
 // ----------  Валидация через Pristine  ----------
 
@@ -45,16 +208,20 @@ const onDocumentKeydown = (evt) => {
 function openOverlay() {
   overlay.classList.remove('hidden');
   body.classList.add('modal-open');
+
   resetScale();
-  resetEffect();
+  resetEffects();
+
   document.addEventListener('keydown', onDocumentKeydown);
 }
 
 function closeOverlay() {
   form.reset();
   pristine.reset();
+
   resetScale();
-  resetEffect();
+  resetEffects();
+
   overlay.classList.add('hidden');
   body.classList.remove('modal-open');
   document.removeEventListener('keydown', onDocumentKeydown);
@@ -81,7 +248,7 @@ cancelButton.addEventListener('click', () => {
 // ---- Правила для хэштегов ----
 
 const HASHTAG_MAX_COUNT = 5;
-const HASHTAG_REGEXP = /^#[a-zа-яё0-9]{1,19}$/i; // # + 1-19 букв/цифр
+const HASHTAG_REGEXP = /^#[a-zа-яё0-9]{1,19}$/i;
 const COMMENT_MAX_LENGTH = 140;
 
 const normalizeHashtags = (value) =>
@@ -90,232 +257,59 @@ const normalizeHashtags = (value) =>
     .split(/\s+/)
     .filter((tag) => tag.length > 0);
 
-// один тег по шаблону
 const isValidHashtag = (tag) => HASHTAG_REGEXP.test(tag);
 
-// 1) все теги по шаблону
 const hasValidHashtags = (value) => {
   const hashtags = normalizeHashtags(value);
   return hashtags.every(isValidHashtag);
 };
 
-// 2) не больше 5 тегов
 const hasValidCount = (value) => {
   const hashtags = normalizeHashtags(value);
   return hashtags.length <= HASHTAG_MAX_COUNT;
 };
 
-// 3) уникальные (регистр не важен)
 const hasUniqueHashtags = (value) => {
   const hashtags = normalizeHashtags(value).map((tag) => tag.toLowerCase());
   const unique = new Set(hashtags);
   return hashtags.length === unique.size;
 };
 
-// 4) комментарий не длиннее 140
 const hasValidCommentLength = (value) => value.length <= COMMENT_MAX_LENGTH;
-
-// добавляем валидаторы в Pristine
 
 pristine.addValidator(
   hashtagsField,
   hasValidHashtags,
-  'Хэш-тег должен начинаться с #, содержать только буквы и цифры и быть не длиннее 20 символов',
+  'Хэш-тег должен начинаться с #, содержать только буквы и цифры и быть не длиннее 20 символов'
 );
 
 pristine.addValidator(
   hashtagsField,
   hasValidCount,
-  'Нельзя указать больше пяти хэш-тегов',
+  'Нельзя указать больше пяти хэш-тегов'
 );
 
 pristine.addValidator(
   hashtagsField,
   hasUniqueHashtags,
-  'Хэш-теги не должны повторяться',
+  'Хэш-теги не должны повторяться'
 );
 
 pristine.addValidator(
   commentField,
   hasValidCommentLength,
-  'Комментарий не может быть длиннее 140 символов',
+  'Комментарий не может быть длиннее 140 символов'
 );
 
 // ----------  Обработка отправки формы  ----------
 
 form.addEventListener('submit', (evt) => {
   const isValid = pristine.validate();
-
   if (!isValid) {
     evt.preventDefault();
   }
 });
 
-// ===================================================================
-//                        МАСШТАБ ИЗОБРАЖЕНИЯ
-// ===================================================================
-
-const SCALE = {
-  MIN: 25,
-  MAX: 100,
-  STEP: 25,
-  DEFAULT: 100,
-};
-
-const setScale = (value) => {
-  scaleValueField.value = `${value}%`;
-  imagePreview.style.transform = `scale(${value / 100})`;
-};
-
-const getCurrentScale = () => parseInt(scaleValueField.value, 10);
-
-const onSmallerClick = () => {
-  const newValue = Math.max(SCALE.MIN, getCurrentScale() - SCALE.STEP);
-  setScale(newValue);
-};
-
-const onBiggerClick = () => {
-  const newValue = Math.min(SCALE.MAX, getCurrentScale() + SCALE.STEP);
-  setScale(newValue);
-};
-
-function resetScale() {
-  setScale(SCALE.DEFAULT);
-}
-
-scaleSmallerButton.addEventListener('click', onSmallerClick);
-scaleBiggerButton.addEventListener('click', onBiggerClick);
-
-// ===================================================================
-//                           ЭФФЕКТЫ И noUiSlider
-// ===================================================================
-
-const EFFECTS = {
-  none: {
-    name: 'none',
-    style: 'none',
-    min: 0,
-    max: 100,
-    step: 1,
-    unit: '',
-  },
-  chrome: {
-    name: 'chrome',
-    style: 'grayscale',
-    min: 0,
-    max: 1,
-    step: 0.1,
-    unit: '',
-  },
-  sepia: {
-    name: 'sepia',
-    style: 'sepia',
-    min: 0,
-    max: 1,
-    step: 0.1,
-    unit: '',
-  },
-  marvin: {
-    name: 'marvin',
-    style: 'invert',
-    min: 0,
-    max: 100,
-    step: 1,
-    unit: '%',
-  },
-  phobos: {
-    name: 'phobos',
-    style: 'blur',
-    min: 0,
-    max: 3,
-    step: 0.1,
-    unit: 'px',
-  },
-  heat: {
-    name: 'heat',
-    style: 'brightness',
-    min: 1,
-    max: 3,
-    step: 0.1,
-    unit: '',
-  },
-};
-
-let currentEffect = EFFECTS.none;
-
-const isDefaultEffect = () => currentEffect === EFFECTS.none;
-
-const showSlider = () => {
-  effectLevelContainer.classList.remove('hidden');
-};
-
-const hideSlider = () => {
-  effectLevelContainer.classList.add('hidden');
-};
-
-// создаём слайдер
-noUiSlider.create(effectLevelSlider, {
-  range: {
-    min: EFFECTS.none.min,
-    max: EFFECTS.none.max,
-  },
-  start: EFFECTS.none.max,
-  step: EFFECTS.none.step,
-  connect: 'lower',
-});
-
-hideSlider();
-
-// применение значения слайдера к превью
-const updateEffect = () => {
-  const sliderValue = effectLevelSlider.noUiSlider.get();
-  effectValueField.value = sliderValue;
-
-  if (isDefaultEffect()) {
-    imagePreview.style.filter = 'none';
-    return;
-  }
-
-  imagePreview.style.filter = `${currentEffect.style}(${sliderValue}${currentEffect.unit})`;
-};
-
-// обновляем настройки слайдера под выбранный эффект
-const updateSlider = () => {
-  effectLevelSlider.noUiSlider.updateOptions({
-    range: {
-      min: currentEffect.min,
-      max: currentEffect.max,
-    },
-    step: currentEffect.step,
-    start: currentEffect.max,
-  });
-};
-
-// обработчик изменения эффекта (переключение радиокнопок)
-const onEffectChange = (evt) => {
-  if (!evt.target.classList.contains('effects__radio')) {
-    return;
-  }
-
-  const effectName = evt.target.value;
-  currentEffect = EFFECTS[effectName];
-
-  if (isDefaultEffect()) {
-    hideSlider();
-  } else {
-    showSlider();
-  }
-
-  updateSlider();
-  updateEffect();
-};
-
-effectsList.addEventListener('change', onEffectChange);
-effectLevelSlider.noUiSlider.on('update', updateEffect);
-
-function resetEffect() {
-  currentEffect = EFFECTS.none;
-  imagePreview.style.filter = 'none';
-  hideSlider();
-  effectLevelSlider.noUiSlider.set(EFFECTS.none.max);
-}
+// ----------  Inicializar controles ----------
+initScale();
+initEffects();
