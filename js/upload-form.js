@@ -44,12 +44,16 @@ const normalizeHashtags = (value) =>
     .split(/\s+/)
     .filter((tag) => tag.length > 0);
 
-const hasValidHashtags = (value) => normalizeHashtags(value).every((tag) => HASHTAG_REGEXP.test(tag));
+const hasValidHashtags = (value) =>
+  normalizeHashtags(value).every((tag) => HASHTAG_REGEXP.test(tag));
+
 const hasValidCount = (value) => normalizeHashtags(value).length <= HASHTAG_MAX_COUNT;
+
 const hasUniqueHashtags = (value) => {
   const hashtags = normalizeHashtags(value).map((tag) => tag.toLowerCase());
   return hashtags.length === new Set(hashtags).size;
 };
+
 const hasValidCommentLength = (value) => value.length <= COMMENT_MAX_LENGTH;
 
 pristine.addValidator(
@@ -268,7 +272,8 @@ form.addEventListener('submit', async (evt) => {
     await sendData(new FormData(form));
     closeOverlay();
     showMessage('#success');
-  } catch {
+  } catch (err) {
+    // eslint necesita el parámetro; aunque no lo uses, así no rompe el parser
     showMessage('#error');
   } finally {
     blockSubmit(false);
