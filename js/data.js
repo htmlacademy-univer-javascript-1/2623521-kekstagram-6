@@ -1,7 +1,6 @@
 import { getRandomInt, getRandomArrayElement } from './util.js';
 
 const NAMES = ['Анна', 'Мария', 'Иван', 'Павел', 'София', 'Олег', 'Елена'];
-
 const MESSAGES = [
   'Отлично!',
   'Супер',
@@ -12,9 +11,8 @@ const MESSAGES = [
   'Мне нравится',
   'Хочу туда!',
   'Классное фото',
-  'Шикарно'
+  'Шикарно',
 ];
-
 const DESCRIPTIONS = ['Моё фото', 'Котик', 'Отпуск', 'Вид из окна', 'Рабочий день'];
 
 const createComment = (id) => ({
