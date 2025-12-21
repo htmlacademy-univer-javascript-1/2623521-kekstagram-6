@@ -1,3 +1,4 @@
+// js/util.js
 const getRandomInt = (a, b) => {
   const min = Math.ceil(Math.min(a, b));
   const max = Math.floor(Math.max(a, b));
@@ -8,4 +9,12 @@ const getRandomArrayElement = (arr) => arr[getRandomInt(0, arr.length - 1)];
 
 const isEscapeKey = (evt) => evt.key === 'Escape';
 
-export { getRandomInt, getRandomArrayElement, isEscapeKey };
+const debounce = (callback, timeoutDelay = 500) => {
+  let timeoutId;
+  return (...rest) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => callback.apply(this, rest), timeoutDelay);
+  };
+};
+
+export { getRandomInt, getRandomArrayElement, isEscapeKey, debounce };
