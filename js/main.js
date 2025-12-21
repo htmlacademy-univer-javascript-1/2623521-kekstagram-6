@@ -1,21 +1,15 @@
 // js/main.js
-import './upload-form.js';                 // módulo con la forma
-import { createPhotos } from './data.js';  // datos para las fotos
+import './upload-form.js';
+import { getData } from './api.js';
 
-// ---------- DATOS ----------
-
-const photos = createPhotos(25);
-
-// ---------- ELEMENTOS PARA MINIATURAS ----------
-
+// ---------- MINIATURAS ----------
 const picturesContainer = document.querySelector('.pictures');
 const pictureTemplate = document
   .querySelector('#picture')
   .content
   .querySelector('.picture');
 
-// ---------- ELEMENTOS PARA LA FOTO GRANDE ----------
-
+// ---------- ЭЛЕМЕНТЫ БОЛЬШОЙ ФОТО ----------
 const bigPictureElement = document.querySelector('.big-picture');
 const bigPictureImg = bigPictureElement.querySelector('.big-picture__img img');
 const likesCountElement = bigPictureElement.querySelector('.likes-count');
@@ -24,19 +18,28 @@ const commentsListElement = bigPictureElement.querySelector('.social__comments')
 const descriptionElement = bigPictureElement.querySelector('.social__caption');
 const closeButton = bigPictureElement.querySelector('.big-picture__cancel');
 
-// elementos del contador de comentarios y botón de carga
+// блок с количеством комментариев и кнопка «Загрузить ещё»
 const commentsCountBlock = bigPictureElement.querySelector('.social__comment-count');
 const commentsLoader = bigPictureElement.querySelector('.comments-loader');
 
-// cuántos comentarios mostramos cada vez
 const COMMENTS_PER_PORTION = 5;
 
-// estado actual de los comentarios de la foto abierta
 let currentComments = [];
 let renderedCommentsCount = 0;
 
-// ---------- COMENTARIOS EN LA FOTO GRANDE ----------
+// ---------- DATA ERROR ----------
+const showDataError = () => {
+  const errorElement = document.createElement('div');
+  errorElement.classList.add('data-error');
+  errorElement.textContent = 'НЕ УДАЛОСЬ ЗАГРУЗИТЬ ДАННЫЕ. ПОПРОБУЙТЕ ОБНОВИТЬ СТРАНИЦУ.';
+  document.body.append(errorElement);
 
+  setTimeout(() => {
+    errorElement.remove();
+  }, 5000);
+};
+
+// ---------- КОММЕНТАРИИ ----------
 const clearComments = () => {
   commentsListElement.innerHTML = '';
 };
@@ -57,6 +60,7 @@ const createCommentElement = (comment) => {
   textElement.textContent = comment.message;
 
   li.append(avatarElement, textElement);
+
   return li;
 };
 
@@ -71,8 +75,7 @@ const showNextComments = () => {
   const end = Math.min(start + COMMENTS_PER_PORTION, currentComments.length);
 
   for (let i = start; i < end; i++) {
-    const commentElement = createCommentElement(currentComments[i]);
-    fragment.append(commentElement);
+    fragment.append(createCommentElement(currentComments[i]));
   }
 
   commentsListElement.append(fragment);
@@ -100,8 +103,7 @@ const renderComments = (comments) => {
 
 commentsLoader.addEventListener('click', showNextComments);
 
-// ---------- ABRIR / CERRAR FOTO GRANDE ----------
-
+// ---------- ОТКРЫТИЕ / ЗАКРЫТИЕ БОЛЬШОЙ ФОТО ----------
 const onDocumentKeydown = (evt) => {
   if (evt.key === 'Escape') {
     evt.preventDefault();
@@ -134,13 +136,16 @@ function closeBigPicture() {
   document.removeEventListener('keydown', onDocumentKeydown);
 }
 
-closeButton.addEventListener('click', () => {
-  closeBigPicture();
-});
+closeButton.addEventListener('click', closeBigPicture);
 
-// ---------- MINIATURAS EN LA PÁGINA PRINCIPAL ----------
+// ---------- МИНИАТЮРЫ ----------
+const clearThumbnails = () => {
+  picturesContainer.querySelectorAll('.picture').forEach((el) => el.remove());
+};
 
 const renderThumbnails = (photosArray) => {
+  clearThumbnails();
+
   const fragment = document.createDocumentFragment();
 
   photosArray.forEach((photo) => {
@@ -155,7 +160,8 @@ const renderThumbnails = (photosArray) => {
     likesElement.textContent = photo.likes;
     commentsElement.textContent = photo.comments.length;
 
-    pictureElement.addEventListener('click', () => {
+    pictureElement.addEventListener('click', (evt) => {
+      evt.preventDefault();
       openBigPicture(photo);
     });
 
@@ -165,6 +171,11 @@ const renderThumbnails = (photosArray) => {
   picturesContainer.append(fragment);
 };
 
-// ---------- INICIO ----------
-
-renderThumbnails(photos);
+// ---------- СТАРТ ----------
+getData()
+  .then((photos) => {
+    renderThumbnails(photos);
+  })
+  .catch(() => {
+    showDataError();
+  });
