@@ -10,7 +10,7 @@ const pictureTemplate = document
   .content
   .querySelector('.picture');
 
-// ---------- ELEMENTOS FOTO GRANDE ----------
+// ---------- ЭЛЕМЕНТЫ БОЛЬШОЙ ФОТО ----------
 const bigPictureElement = document.querySelector('.big-picture');
 const bigPictureImg = bigPictureElement.querySelector('.big-picture__img img');
 const likesCountElement = bigPictureElement.querySelector('.likes-count');
@@ -19,10 +19,16 @@ const commentsListElement = bigPictureElement.querySelector('.social__comments')
 const descriptionElement = bigPictureElement.querySelector('.social__caption');
 const closeButton = bigPictureElement.querySelector('.big-picture__cancel');
 
+// блок с количеством комментариев и кнопка «Загрузить ещё»
 const commentsCountBlock = bigPictureElement.querySelector('.social__comment-count');
 const commentsLoader = bigPictureElement.querySelector('.comments-loader');
 
-// ---------- ERROR DE CARGA ----------
+const COMMENTS_PER_PORTION = 5;
+
+let currentComments = [];
+let renderedCommentsCount = 0;
+
+// ---------- DATA ERROR ----------
 const showDataError = () => {
   const errorElement = document.createElement('div');
   errorElement.classList.add('data-error');
@@ -34,7 +40,7 @@ const showDataError = () => {
   }, 5000);
 };
 
-// ---------- COMENTARIOS ----------
+// ---------- КОММЕНТАРИИ ----------
 const clearComments = () => {
   commentsListElement.innerHTML = '';
 };
@@ -55,21 +61,50 @@ const createCommentElement = (comment) => {
   textElement.textContent = comment.message;
 
   li.append(avatarElement, textElement);
+
   return li;
 };
 
-const renderComments = (comments) => {
-  clearComments();
-  const fragment = document.createDocumentFragment();
-
-  comments.forEach((comment) => {
-    fragment.append(createCommentElement(comment));
-  });
-
-  commentsListElement.append(fragment);
+const updateCommentsCounter = () => {
+  commentsCountBlock.textContent = `${renderedCommentsCount} из ${currentComments.length} комментариев`;
 };
 
-// ---------- ABRIR / CERRAR FOTO GRANDE ----------
+const showNextComments = () => {
+  const fragment = document.createDocumentFragment();
+
+  const start = renderedCommentsCount;
+  const end = Math.min(start + COMMENTS_PER_PORTION, currentComments.length);
+
+  for (let i = start; i < end; i++) {
+    fragment.append(createCommentElement(currentComments[i]));
+  }
+
+  commentsListElement.append(fragment);
+
+  renderedCommentsCount = end;
+  updateCommentsCounter();
+
+  if (renderedCommentsCount >= currentComments.length) {
+    commentsLoader.classList.add('hidden');
+  }
+};
+
+const renderComments = (comments) => {
+  currentComments = comments;
+  clearComments();
+  renderedCommentsCount = 0;
+
+  commentsCountBlock.classList.remove('hidden');
+  commentsLoader.classList.remove('hidden');
+
+  commentsCountElement.textContent = currentComments.length;
+
+  showNextComments();
+};
+
+commentsLoader.addEventListener('click', showNextComments);
+
+// ---------- ОТКРЫТИЕ / ЗАКРЫТИЕ БОЛЬШОЙ ФОТО ----------
 const onDocumentKeydown = (evt) => {
   if (evt.key === 'Escape') {
     evt.preventDefault();
@@ -82,14 +117,9 @@ function openBigPicture(photo) {
   bigPictureImg.alt = photo.description;
 
   likesCountElement.textContent = photo.likes;
-  commentsCountElement.textContent = photo.comments.length;
   descriptionElement.textContent = photo.description;
 
   renderComments(photo.comments);
-
-  // En este proyecto ocultamos contador y botón de "cargar más" (no se usan aquí)
-  commentsCountBlock.classList.add('hidden');
-  commentsLoader.classList.add('hidden');
 
   bigPictureElement.classList.remove('hidden');
   document.body.classList.add('modal-open');
@@ -101,12 +131,15 @@ function closeBigPicture() {
   bigPictureElement.classList.add('hidden');
   document.body.classList.remove('modal-open');
 
+  commentsCountBlock.classList.add('hidden');
+  commentsLoader.classList.add('hidden');
+
   document.removeEventListener('keydown', onDocumentKeydown);
 }
 
 closeButton.addEventListener('click', closeBigPicture);
 
-// ---------- MINIATURAS ----------
+// ---------- МИНИАТЮРЫ ----------
 const clearThumbnails = () => {
   picturesContainer.querySelectorAll('.picture').forEach((el) => el.remove());
 };
@@ -139,13 +172,12 @@ const renderThumbnails = (photosArray) => {
   picturesContainer.append(fragment);
 };
 
-// ---------- INICIO ----------
-getData()
+// ---------- СТАРТ ----------
 getData()
   .then((photos) => {
-    renderThumbnails(photos);
-    initFilters(photos, renderThumbnails);
+    renderThumbnails(photos);          // pinta default
+    initFilters(photos, renderThumbnails); // activa filtros + debounce
   })
   .catch(() => {
-    // opcional: mostrar error
+    showDataError();
   });
