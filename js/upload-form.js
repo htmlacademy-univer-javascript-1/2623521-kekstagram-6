@@ -99,8 +99,76 @@ let currentEffect = 'none';
 const hideSlider = () => effectLevelContainer.classList.add('hidden');
 const showSlider = () => effectLevelContainer.classList.remove('hidden');
 
-// si noUiSlider no está cargado por alguna razón, no rompemos la app
-if (typeof window.noUiSlider !== 'undefined') {
+const isNoUiSliderAvailable = typeof window.noUiSlider !== 'undefined';
+
+const applyCurrentEffect = () => {
+  if (!isNoUiSliderAvailable || !effectLevelSlider.noUiSlider) {
+    previewImg.style.filter = 'none';
+    effectLevelValue.value = '';
+    hideSlider();
+    return;
+  }
+
+  const value = effectLevelSlider.noUiSlider.get();
+  effectLevelValue.value = value;
+
+  const effect = EFFECTS[currentEffect];
+
+  if (currentEffect === 'none') {
+    previewImg.style.filter = 'none';
+    hideSlider();
+    return;
+  }
+
+  previewImg.style.filter = `${effect.filter}(${value}${effect.unit})`;
+};
+
+const setEffect = (effectName) => {
+  currentEffect = effectName;
+
+  if (!isNoUiSliderAvailable || !effectLevelSlider.noUiSlider) {
+    applyCurrentEffect();
+    return;
+  }
+
+  const effect = EFFECTS[effectName];
+
+  if (effectName === 'none') {
+    hideSlider();
+    previewImg.style.filter = 'none';
+
+    effectLevelSlider.noUiSlider.updateOptions({
+      range: { min: EFFECTS.none.min, max: EFFECTS.none.max },
+      start: EFFECTS.none.start,
+      step: EFFECTS.none.step,
+    });
+
+    return;
+  }
+
+  showSlider();
+  effectLevelSlider.noUiSlider.updateOptions({
+    range: { min: effect.min, max: effect.max },
+    start: effect.start,
+    step: effect.step,
+  });
+};
+
+const resetEffects = () => {
+  const noneRadio = form.querySelector('#effect-none');
+  if (noneRadio) {
+    noneRadio.checked = true;
+  }
+  setEffect('none');
+
+  if (isNoUiSliderAvailable && effectLevelSlider.noUiSlider) {
+    effectLevelSlider.noUiSlider.set(EFFECTS.none.start);
+  } else {
+    applyCurrentEffect();
+  }
+};
+
+if (isNoUiSliderAvailable) {
   window.noUiSlider.create(effectLevelSlider, {
     range: { min: EFFECTS.none.min, max: EFFECTS.none.max },
     start: EFFECTS.none.start,
@@ -108,66 +176,15 @@ if (typeof window.noUiSlider !== 'undefined') {
     connect: 'lower',
   });
 
-  const updateEffect = () => {
-    const value = effectLevelSlider.noUiSlider.get();
-    effectLevelValue.value = value;
-
-    const effect = EFFECTS[currentEffect];
-
-    if (currentEffect === 'none') {
-      previewImg.style.filter = 'none';
-      return;
-    }
-
-    previewImg.style.filter = `${effect.filter}(${value}${effect.unit})`;
-  };
-
-  effectLevelSlider.noUiSlider.on('update', updateEffect);
-
-  const setEffect = (effectName) => {
-    currentEffect = effectName;
-    const effect = EFFECTS[effectName];
-
-    if (effectName === 'none') {
-      hideSlider();
-      effectLevelSlider.noUiSlider.updateOptions({
-        range: { min: EFFECTS.none.min, max: EFFECTS.none.max },
-        start: EFFECTS.none.start,
-        step: EFFECTS.none.step,
-      });
-      previewImg.style.filter = 'none';
-      return;
-    }
-
-    showSlider();
-    effectLevelSlider.noUiSlider.updateOptions({
-      range: { min: effect.min, max: effect.max },
-      start: effect.start,
-      step: effect.step,
-    });
-  };
-
-  var resetEffects = () => {
-    const noneRadio = form.querySelector('#effect-none');
-    if (noneRadio) {
-      noneRadio.checked = true;
-    }
-    setEffect('none');
-  };
-
-  effectsList.addEventListener('change', (evt) => {
-    if (evt.target.name === 'effect') {
-      setEffect(evt.target.value);
-    }
-  });
-} else {
-  // fallback si falta noUiSlider
-  var resetEffects = () => {
-    previewImg.style.filter = 'none';
-    hideSlider();
-    effectLevelValue.value = '';
-  };
+  effectLevelSlider.noUiSlider.on('update', applyCurrentEffect);
 }
+
+effectsList.addEventListener('change', (evt) => {
+  if (evt.target.name === 'effect') {
+    setEffect(evt.target.value);
+    applyCurrentEffect();
+  }
+});
 
 // ---------- Overlay ----------
 const isEscapeKey = (evt) => evt.key === 'Escape';
@@ -209,13 +226,11 @@ function closeOverlay() {
   resetScale();
   resetEffects();
 
-  // liberar objectURL si existía
   if (previewUrl) {
     URL.revokeObjectURL(previewUrl);
     previewUrl = null;
   }
 
-  // volver al preview por defecto (gato)
   previewImg.src = 'img/upload-default-image.jpg';
   previewImg.style.transform = 'scale(1)';
   previewImg.style.filter = 'none';
