@@ -27,4 +27,4 @@ export const sendData = (formData) =>
   fetch(`${BASE_URL}${Route.SEND_DATA}`, {
     method: Method.POST,
     body: formData, // FormData => multipart/form-data automático
-  });
+  }).then(checkResponse);

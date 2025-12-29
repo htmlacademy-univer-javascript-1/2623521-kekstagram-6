@@ -1,6 +1,7 @@
 // js/main.js
 import './upload-form.js';
 import { getData } from './api.js';
+import { initFilters } from './filters.js';
 
 // ---------- MINIATURAS ----------
 const picturesContainer = document.querySelector('.pictures');
@@ -17,8 +18,6 @@ const commentsCountElement = bigPictureElement.querySelector('.comments-count');
 const commentsListElement = bigPictureElement.querySelector('.social__comments');
 const descriptionElement = bigPictureElement.querySelector('.social__caption');
 const closeButton = bigPictureElement.querySelector('.big-picture__cancel');
-
-// блок с количеством комментариев и кнопка «Загрузить ещё»
 const commentsCountBlock = bigPictureElement.querySelector('.social__comment-count');
 const commentsLoader = bigPictureElement.querySelector('.comments-loader');
 
@@ -175,6 +174,7 @@ const renderThumbnails = (photosArray) => {
 getData()
   .then((photos) => {
     renderThumbnails(photos);
+    initFilters(photos, renderThumbnails);
   })
   .catch(() => {
     showDataError();

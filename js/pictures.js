@@ -5,6 +5,10 @@ export const renderPictures = (photos) => {
     .querySelector('.picture');
 
   const container = document.querySelector('.pictures');
+
+  // borra miniaturas previas (para que filtros re-rendericen bien)
+  container.querySelectorAll('.picture').forEach((el) => el.remove());
+
   const fragment = document.createDocumentFragment();
 
   photos.forEach(({ url, description, likes, comments }) => {

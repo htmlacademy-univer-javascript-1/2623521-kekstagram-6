@@ -7,11 +7,10 @@ const form = document.querySelector('.img-upload__form');
 const uploadFileField = form.querySelector('#upload-file');
 const overlay = document.querySelector('.img-upload__overlay');
 const cancelButton = overlay.querySelector('.img-upload__cancel');
+const submitButton = form.querySelector('.img-upload__submit');
 
 const hashtagsField = form.querySelector('.text__hashtags');
 const commentField = form.querySelector('.text__description');
-const submitButton = form.querySelector('.img-upload__submit');
-
 const previewImg = overlay.querySelector('.img-upload__preview img');
 
 // scale
@@ -61,7 +60,6 @@ pristine.addValidator(
   hasValidHashtags,
   'Хэш-тег должен начинаться с #, содержать только буквы и цифры и быть не длиннее 20 символов',
 );
-
 pristine.addValidator(hashtagsField, hasValidCount, 'Нельзя указать больше пяти хэш-тегов');
 pristine.addValidator(hashtagsField, hasUniqueHashtags, 'Хэш-теги не должны повторяться');
 pristine.addValidator(commentField, hasValidCommentLength, 'Комментарий не может быть длиннее 140 символов');
@@ -148,7 +146,10 @@ const setEffect = (effectName) => {
 };
 
 const resetEffects = () => {
-  form.querySelector('#effect-none').checked = true;
+  const noneRadio = form.querySelector('#effect-none');
+  if (noneRadio) {
+    noneRadio.checked = true;
+  }
   setEffect('none');
 };
 
@@ -159,21 +160,24 @@ effectsList.addEventListener('change', (evt) => {
 });
 
 // ---------- Overlay ----------
+const isEscapeKey = (evt) => evt.key === 'Escape';
+
+const onDocumentKeydown = (evt) => {
+  if (isEscapeKey(evt)) {
+    evt.preventDefault();
+    closeOverlay();
+  }
+};
+
+// блокируем закрытие по Esc, если курсор в поле
 const stopEscPropagation = (evt) => {
-  if (evt.key === 'Escape') {
+  if (isEscapeKey(evt)) {
     evt.stopPropagation();
   }
 };
 
 hashtagsField.addEventListener('keydown', stopEscPropagation);
 commentField.addEventListener('keydown', stopEscPropagation);
-
-const onDocumentKeydown = (evt) => {
-  if (evt.key === 'Escape') {
-    evt.preventDefault();
-    closeOverlay();
-  }
-};
 
 let previewUrl = null;
 
@@ -191,7 +195,6 @@ function openOverlay() {
 function closeOverlay() {
   form.reset();
   pristine.reset();
-
   resetScale();
   resetEffects();
 
@@ -215,6 +218,7 @@ uploadFileField.addEventListener('change', () => {
   if (previewUrl) {
     URL.revokeObjectURL(previewUrl);
   }
+
   previewUrl = URL.createObjectURL(file);
   previewImg.src = previewUrl;
 
@@ -224,8 +228,6 @@ uploadFileField.addEventListener('change', () => {
 cancelButton.addEventListener('click', closeOverlay);
 
 // ---------- Success / Error messages ----------
-const isEscapeKey = (evt) => evt.key === 'Escape';
-
 const showMessage = (templateId) => {
   const template = document.querySelector(templateId).content.querySelector('section');
   const message = template.cloneNode(true);
@@ -273,7 +275,6 @@ form.addEventListener('submit', async (evt) => {
     closeOverlay();
     showMessage('#success');
   } catch (err) {
-    // eslint necesita el parámetro; aunque no lo uses, así no rompe el parser
     showMessage('#error');
   } finally {
     blockSubmit(false);
