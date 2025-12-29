@@ -99,65 +99,75 @@ let currentEffect = 'none';
 const hideSlider = () => effectLevelContainer.classList.add('hidden');
 const showSlider = () => effectLevelContainer.classList.remove('hidden');
 
-noUiSlider.create(effectLevelSlider, {
-  range: { min: EFFECTS.none.min, max: EFFECTS.none.max },
-  start: EFFECTS.none.start,
-  step: EFFECTS.none.step,
-  connect: 'lower',
-});
-
-const updateEffect = () => {
-  const value = effectLevelSlider.noUiSlider.get();
-  effectLevelValue.value = value;
-
-  const effect = EFFECTS[currentEffect];
-
-  if (currentEffect === 'none') {
-    previewImg.style.filter = 'none';
-    return;
-  }
-
-  previewImg.style.filter = `${effect.filter}(${value}${effect.unit})`;
-};
-
-effectLevelSlider.noUiSlider.on('update', updateEffect);
-
-const setEffect = (effectName) => {
-  currentEffect = effectName;
-  const effect = EFFECTS[effectName];
-
-  if (effectName === 'none') {
-    hideSlider();
-    effectLevelSlider.noUiSlider.updateOptions({
-      range: { min: EFFECTS.none.min, max: EFFECTS.none.max },
-      start: EFFECTS.none.start,
-      step: EFFECTS.none.step,
-    });
-    previewImg.style.filter = 'none';
-    return;
-  }
-
-  showSlider();
-  effectLevelSlider.noUiSlider.updateOptions({
-    range: { min: effect.min, max: effect.max },
-    start: effect.start,
-    step: effect.step,
+// si noUiSlider no está cargado por alguna razón, no rompemos la app
+if (typeof window.noUiSlider !== 'undefined') {
+  window.noUiSlider.create(effectLevelSlider, {
+    range: { min: EFFECTS.none.min, max: EFFECTS.none.max },
+    start: EFFECTS.none.start,
+    step: EFFECTS.none.step,
+    connect: 'lower',
   });
-};
 
-const resetEffects = () => {
-  const noneRadio = form.querySelector('#effect-none');
-  if (noneRadio) {
-    noneRadio.checked = true;
-  }
-  setEffect('none');
-};
+  const updateEffect = () => {
+    const value = effectLevelSlider.noUiSlider.get();
+    effectLevelValue.value = value;
 
-effectsList.addEventListener('change', (evt) => {
-  if (evt.target.name === 'effect') {
-    setEffect(evt.target.value);
-  }
-});
+    const effect = EFFECTS[currentEffect];
+
+    if (currentEffect === 'none') {
+      previewImg.style.filter = 'none';
+      return;
+    }
+
+    previewImg.style.filter = `${effect.filter}(${value}${effect.unit})`;
+  };
+
+  effectLevelSlider.noUiSlider.on('update', updateEffect);
+
+  const setEffect = (effectName) => {
+    currentEffect = effectName;
+    const effect = EFFECTS[effectName];
+
+    if (effectName === 'none') {
+      hideSlider();
+      effectLevelSlider.noUiSlider.updateOptions({
+        range: { min: EFFECTS.none.min, max: EFFECTS.none.max },
+        start: EFFECTS.none.start,
+        step: EFFECTS.none.step,
+      });
+      previewImg.style.filter = 'none';
+      return;
+    }
+
+    showSlider();
+    effectLevelSlider.noUiSlider.updateOptions({
+      range: { min: effect.min, max: effect.max },
+      start: effect.start,
+      step: effect.step,
+    });
+  };
+
+  var resetEffects = () => {
+    const noneRadio = form.querySelector('#effect-none');
+    if (noneRadio) {
+      noneRadio.checked = true;
+    }
+    setEffect('none');
+  };
+
+  effectsList.addEventListener('change', (evt) => {
+    if (evt.target.name === 'effect') {
+      setEffect(evt.target.value);
+    }
+  });
+} else {
+  // fallback si falta noUiSlider
+  var resetEffects = () => {
+    previewImg.style.filter = 'none';
+    hideSlider();
+    effectLevelValue.value = '';
+  };
+}
 
 // ---------- Overlay ----------
 const isEscapeKey = (evt) => evt.key === 'Escape';
@@ -195,13 +205,20 @@ function openOverlay() {
 function closeOverlay() {
   form.reset();
   pristine.reset();
+
   resetScale();
   resetEffects();
 
+  // liberar objectURL si existía
   if (previewUrl) {
     URL.revokeObjectURL(previewUrl);
     previewUrl = null;
   }
+
+  // volver al preview por defecto (gato)
+  previewImg.src = 'img/upload-default-image.jpg';
+  previewImg.style.transform = 'scale(1)';
+  previewImg.style.filter = 'none';
 
   overlay.classList.add('hidden');
   body.classList.remove('modal-open');
