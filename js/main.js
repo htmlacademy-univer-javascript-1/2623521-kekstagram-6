@@ -18,7 +18,6 @@ const commentsCountElement = bigPictureElement.querySelector('.comments-count');
 const commentsListElement = bigPictureElement.querySelector('.social__comments');
 const descriptionElement = bigPictureElement.querySelector('.social__caption');
 const closeButton = bigPictureElement.querySelector('.big-picture__cancel');
-
 const commentsCountBlock = bigPictureElement.querySelector('.social__comment-count');
 const commentsLoader = bigPictureElement.querySelector('.comments-loader');
 
@@ -158,7 +157,7 @@ const renderThumbnails = (photosArray) => {
     imgElement.src = photo.url;
     imgElement.alt = photo.description;
     likesElement.textContent = photo.likes;
-    demonstrateCommentsCount(photo, commentsElement);
+    commentsElement.textContent = photo.comments.length;
 
     pictureElement.addEventListener('click', (evt) => {
       evt.preventDefault();
@@ -170,10 +169,6 @@ const renderThumbnails = (photosArray) => {
 
   picturesContainer.append(fragment);
 };
-
-function demonstrateCommentsCount(photo, commentsElement) {
-  commentsElement.textContent = photo.comments.length;
-}
 
 // ---------- СТАРТ ----------
 getData()
