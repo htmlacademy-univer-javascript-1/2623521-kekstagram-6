@@ -6,36 +6,38 @@ const ACTIVE_BUTTON_CLASS = 'img-filters__button--active';
 const RANDOM_COUNT = 10;
 
 const filtersBlock = document.querySelector('.img-filters');
-const form = filtersBlock?.querySelector('.img-filters__form');
+const form = filtersBlock ? filtersBlock.querySelector('.img-filters__form') : null;
 
 let currentFilter = 'filter-default';
 
 const showFilters = () => {
-  if (!filtersBlock) { return; }
+  if (!filtersBlock) {
+    return;
+  }
   filtersBlock.classList.remove(FILTERS_BLOCK_CLASS);
 };
 
 const setActiveButton = (filterId) => {
-  if (!form) { return; }
+  if (!form) {
+    return;
+  }
+
   const currentActive = form.querySelector(`.${ACTIVE_BUTTON_CLASS}`);
-  currentActive?.classList.remove(ACTIVE_BUTTON_CLASS);
+  if (currentActive) {
+    currentActive.classList.remove(ACTIVE_BUTTON_CLASS);
+  }
 
   const newActive = form.querySelector(`#${filterId}`);
-  newActive?.classList.add(ACTIVE_BUTTON_CLASS);
+  if (newActive) {
+    newActive.classList.add(ACTIVE_BUTTON_CLASS);
+  }
 };
 
-// Mejor aleatorio sin sesgo (Fisher–Yates)
-const getRandomPictures = (pictures) => {
-  const arr = pictures.slice();
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr.slice(0, RANDOM_COUNT);
-};
+const getRandomPictures = (pictures) =>
+  [...pictures].sort(() => Math.random() - 0.5).slice(0, RANDOM_COUNT);
 
 const getDiscussedPictures = (pictures) =>
-  pictures.slice().sort((a, b) => b.comments.length - a.comments.length);
+  [...pictures].sort((a, b) => b.comments.length - a.comments.length);
 
 const applyFilter = (pictures, filterId) => {
   switch (filterId) {
@@ -45,24 +47,31 @@ const applyFilter = (pictures, filterId) => {
       return getDiscussedPictures(pictures);
     case 'filter-default':
     default:
-      return pictures.slice();
+      return [...pictures];
   }
 };
 
 export const initFilters = (loadedPictures, onFilterChange) => {
-  if (!filtersBlock || !form) { return; } // <- clave
+  if (!filtersBlock || !form) {
+    return;
+  }
 
   showFilters();
 
   const debouncedRender = debounce(() => {
-    onFilterChange(applyFilter(loadedPictures, currentFilter));
+    const filtered = applyFilter(loadedPictures, currentFilter);
+    onFilterChange(filtered);
   }, 500);
 
   form.addEventListener('click', (evt) => {
     const button = evt.target.closest('button');
-    if (!button) { return; }
+    if (!button) {
+      return;
+    }
 
-    if (button.id === currentFilter) { return; }
+    if (button.id === currentFilter) {
+      return;
+    }
 
     currentFilter = button.id;
     setActiveButton(currentFilter);
