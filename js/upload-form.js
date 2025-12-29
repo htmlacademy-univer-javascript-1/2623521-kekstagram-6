@@ -99,14 +99,16 @@ let currentEffect = 'none';
 const hideSlider = () => effectLevelContainer.classList.add('hidden');
 const showSlider = () => effectLevelContainer.classList.remove('hidden');
 
-noUiSlider.create(effectLevelSlider, {
-  range: { min: EFFECTS.none.min, max: EFFECTS.none.max },
-  start: EFFECTS.none.start,
-  step: EFFECTS.none.step,
-  connect: 'lower',
-});
+const isNoUiSliderAvailable = typeof window.noUiSlider !== 'undefined';
 
-const updateEffect = () => {
+const applyCurrentEffect = () => {
+  if (!isNoUiSliderAvailable || !effectLevelSlider.noUiSlider) {
+    previewImg.style.filter = 'none';
+    effectLevelValue.value = '';
+    hideSlider();
+    return;
+  }
+
   const value = effectLevelSlider.noUiSlider.get();
   effectLevelValue.value = value;
 
@@ -114,26 +116,33 @@ const updateEffect = () => {
 
   if (currentEffect === 'none') {
     previewImg.style.filter = 'none';
+    hideSlider();
     return;
   }
 
   previewImg.style.filter = `${effect.filter}(${value}${effect.unit})`;
 };
 
-effectLevelSlider.noUiSlider.on('update', updateEffect);
-
 const setEffect = (effectName) => {
   currentEffect = effectName;
+
+  if (!isNoUiSliderAvailable || !effectLevelSlider.noUiSlider) {
+    applyCurrentEffect();
+    return;
+  }
+
   const effect = EFFECTS[effectName];
 
   if (effectName === 'none') {
     hideSlider();
+    previewImg.style.filter = 'none';
+
     effectLevelSlider.noUiSlider.updateOptions({
       range: { min: EFFECTS.none.min, max: EFFECTS.none.max },
       start: EFFECTS.none.start,
       step: EFFECTS.none.step,
     });
-    previewImg.style.filter = 'none';
+
     return;
   }
 
@@ -151,11 +160,29 @@ const resetEffects = () => {
     noneRadio.checked = true;
   }
   setEffect('none');
+
+  if (isNoUiSliderAvailable && effectLevelSlider.noUiSlider) {
+    effectLevelSlider.noUiSlider.set(EFFECTS.none.start);
+  } else {
+    applyCurrentEffect();
+  }
 };
+
+if (isNoUiSliderAvailable) {
+  window.noUiSlider.create(effectLevelSlider, {
+    range: { min: EFFECTS.none.min, max: EFFECTS.none.max },
+    start: EFFECTS.none.start,
+    step: EFFECTS.none.step,
+    connect: 'lower',
+  });
+
+  effectLevelSlider.noUiSlider.on('update', applyCurrentEffect);
+}
 
 effectsList.addEventListener('change', (evt) => {
   if (evt.target.name === 'effect') {
     setEffect(evt.target.value);
+    applyCurrentEffect();
   }
 });
 
@@ -195,6 +222,7 @@ function openOverlay() {
 function closeOverlay() {
   form.reset();
   pristine.reset();
+
   resetScale();
   resetEffects();
 
@@ -202,6 +230,10 @@ function closeOverlay() {
     URL.revokeObjectURL(previewUrl);
     previewUrl = null;
   }
+
+  previewImg.src = 'img/upload-default-image.jpg';
+  previewImg.style.transform = 'scale(1)';
+  previewImg.style.filter = 'none';
 
   overlay.classList.add('hidden');
   body.classList.remove('modal-open');
