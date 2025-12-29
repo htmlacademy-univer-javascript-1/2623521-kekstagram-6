@@ -18,123 +18,6 @@ const pristine = new Pristine(form, {
   errorTextClass: 'img-upload__error',
 });
 
-// ----------------- OPEN/CLOSE OVERLAY -----------------
-const onDocumentKeydown = (evt) => {
-  if (evt.key === 'Escape') {
-    evt.preventDefault();
-    closeOverlay();
-  }
-};
-
-function openOverlay() {
-  overlay.classList.remove('hidden');
-  body.classList.add('modal-open');
-  document.addEventListener('keydown', onDocumentKeydown);
-}
-
-function closeOverlay() {
-  form.reset();
-  pristine.reset();
-
-  resetScale();
-  resetEffects();
-
-  // limpiar preview
-  previewImg.src = 'img/upload-default-image.jpg';
-  previewImg.style.transform = 'scale(1)';
-  previewImg.style.filter = '';
-
-  overlay.classList.add('hidden');
-  body.classList.remove('modal-open');
-  document.removeEventListener('keydown', onDocumentKeydown);
-}
-
-// Bloquear cierre con ESC cuando estás escribiendo
-const stopEscPropagation = (evt) => {
-  if (evt.key === 'Escape') {
-    evt.stopPropagation();
-  }
-};
-
-hashtagsField.addEventListener('keydown', stopEscPropagation);
-commentField.addEventListener('keydown', stopEscPropagation);
-
-// ----------------- VALIDACIÓN -----------------
-const HASHTAG_MAX_COUNT = 5;
-const HASHTAG_REGEXP = /^#[a-zа-яё0-9]{1,19}$/i;
-const COMMENT_MAX_LENGTH = 140;
-
-const normalizeHashtags = (value) =>
-  value
-    .trim()
-    .split(/\s+/)
-    .filter((tag) => tag.length > 0);
-
-const hasValidHashtags = (value) => normalizeHashtags(value).every((tag) => HASHTAG_REGEXP.test(tag));
-const hasValidCount = (value) => normalizeHashtags(value).length <= HASHTAG_MAX_COUNT;
-
-const hasUniqueHashtags = (value) => {
-  const tags = normalizeHashtags(value).map((t) => t.toLowerCase());
-  return tags.length === new Set(tags).size;
-};
-
-const hasValidCommentLength = (value) => value.length <= COMMENT_MAX_LENGTH;
-
-pristine.addValidator(
-  hashtagsField,
-  hasValidHashtags,
-  'Хэш-тег должен начинаться с #, содержать только буквы и цифры и быть не длиннее 20 символов'
-);
-
-pristine.addValidator(
-  hashtagsField,
-  hasValidCount,
-  'Нельзя указать больше пяти хэш-тегов'
-);
-
-pristine.addValidator(
-  hashtagsField,
-  hasUniqueHashtags,
-  'Хэш-теги не должны повторяться'
-);
-
-pristine.addValidator(
-  commentField,
-  hasValidCommentLength,
-  'Комментарий не может быть длиннее 140 символов'
-);
-
-// ----------------- PREVIEW FILE (para que NO sea solo el gato) -----------------
-const FILE_TYPES = ['jpg', 'jpeg', 'png', 'webp'];
-
-uploadFileField.addEventListener('change', () => {
-  const file = uploadFileField.files[0];
-  if (!file) {
-    return;
-  }
-
-  const fileName = file.name.toLowerCase();
-  const matches = FILE_TYPES.some((ext) => fileName.endsWith(ext));
-
-  if (!matches) {
-    // si quieres, puedes mostrar un mensaje
-    return;
-  }
-
-  // mostrar imagen seleccionada
-  previewImg.src = URL.createObjectURL(file);
-
-  openOverlay();
-  resetScale();
-  initEffects(); // asegurar slider listo
-  resetEffects();
-});
-
-// cerrar
-cancelButton.addEventListener('click', () => {
-  closeOverlay();
-});
-
 // ----------------- SCALE (ZOOM) -----------------
 const scaleSmaller = overlay.querySelector('.scale__control--smaller');
 const scaleBigger = overlay.querySelector('.scale__control--bigger');
@@ -232,10 +115,8 @@ function resetEffects() {
 }
 
 function initEffects() {
-  // si no está cargado noUiSlider, no hay slider funcional
   if (typeof window.noUiSlider === 'undefined') {
-    // esto explica por qué no se podía mover: faltaba vendor/nouislider/
-    return;
+    return; // si no se cargó, no hay slider
   }
 
   if (!sliderContainer.noUiSlider) {
@@ -259,6 +140,119 @@ function initEffects() {
     updateSliderOptions();
   });
 }
+
+// ----------------- OPEN/CLOSE OVERLAY -----------------
+const onDocumentKeydown = (evt) => {
+  if (evt.key === 'Escape') {
+    evt.preventDefault();
+    closeOverlay();
+  }
+};
+
+function openOverlay() {
+  overlay.classList.remove('hidden');
+  body.classList.add('modal-open');
+  document.addEventListener('keydown', onDocumentKeydown);
+}
+
+function closeOverlay() {
+  form.reset();
+  pristine.reset();
+
+  resetScale();
+  resetEffects();
+
+  previewImg.src = 'img/upload-default-image.jpg';
+  previewImg.style.transform = 'scale(1)';
+  previewImg.style.filter = '';
+
+  overlay.classList.add('hidden');
+  body.classList.remove('modal-open');
+  document.removeEventListener('keydown', onDocumentKeydown);
+}
+
+// Bloquear cierre con ESC cuando estás escribiendo
+const stopEscPropagation = (evt) => {
+  if (evt.key === 'Escape') {
+    evt.stopPropagation();
+  }
+};
+
+hashtagsField.addEventListener('keydown', stopEscPropagation);
+commentField.addEventListener('keydown', stopEscPropagation);
+
+// ----------------- VALIDACIÓN -----------------
+const HASHTAG_MAX_COUNT = 5;
+const HASHTAG_REGEXP = /^#[a-zа-яё0-9]{1,19}$/i;
+const COMMENT_MAX_LENGTH = 140;
+
+const normalizeHashtags = (value) =>
+  value
+    .trim()
+    .split(/\s+/)
+    .filter((tag) => tag.length > 0);
+
+const hasValidHashtags = (value) =>
+  normalizeHashtags(value).every((tag) => HASHTAG_REGEXP.test(tag));
+
+const hasValidCount = (value) =>
+  normalizeHashtags(value).length <= HASHTAG_MAX_COUNT;
+
+const hasUniqueHashtags = (value) => {
+  const tags = normalizeHashtags(value).map((t) => t.toLowerCase());
+  return tags.length === new Set(tags).size;
+};
+
+const hasValidCommentLength = (value) => value.length <= COMMENT_MAX_LENGTH;
+
+pristine.addValidator(
+  hashtagsField,
+  hasValidHashtags,
+  'Хэш-тег должен начинаться с #, содержать только буквы и цифры и быть не длиннее 20 символов'
+);
+
+pristine.addValidator(
+  hashtagsField,
+  hasValidCount,
+  'Нельзя указать больше пяти хэш-тегов'
+);
+
+pristine.addValidator(
+  hashtagsField,
+  hasUniqueHashtags,
+  'Хэш-теги не должны повторяться'
+);
+
+pristine.addValidator(
+  commentField,
+  hasValidCommentLength,
+  'Комментарий не может быть длиннее 140 символов'
+);
+
+// ----------------- PREVIEW FILE -----------------
+const FILE_TYPES = ['jpg', 'jpeg', 'png', 'webp'];
+
+uploadFileField.addEventListener('change', () => {
+  const file = uploadFileField.files[0];
+  if (!file) {
+    return;
+  }
+
+  const fileName = file.name.toLowerCase();
+  const matches = FILE_TYPES.some((ext) => fileName.endsWith(ext));
+  if (!matches) {
+    return;
+  }
+
+  previewImg.src = URL.createObjectURL(file);
+
+  openOverlay();
+  resetScale();
+  initEffects();
+  resetEffects();
+});
+
+cancelButton.addEventListener('click', closeOverlay);
 
 // ----------------- SUBMIT -----------------
 form.addEventListener('submit', (evt) => {

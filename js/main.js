@@ -19,7 +19,6 @@ const commentsListElement = bigPictureElement.querySelector('.social__comments')
 const descriptionElement = bigPictureElement.querySelector('.social__caption');
 const closeButton = bigPictureElement.querySelector('.big-picture__cancel');
 
-// блок с количеством комментариев и кнопка «Загрузить ещё»
 const commentsCountBlock = bigPictureElement.querySelector('.social__comment-count');
 const commentsLoader = bigPictureElement.querySelector('.comments-loader');
 
@@ -159,7 +158,7 @@ const renderThumbnails = (photosArray) => {
     imgElement.src = photo.url;
     imgElement.alt = photo.description;
     likesElement.textContent = photo.likes;
-    commentsElement.textContent = photo.comments.length;
+    demonstrateCommentsCount(photo, commentsElement);
 
     pictureElement.addEventListener('click', (evt) => {
       evt.preventDefault();
@@ -172,11 +171,15 @@ const renderThumbnails = (photosArray) => {
   picturesContainer.append(fragment);
 };
 
+function demonstrateCommentsCount(photo, commentsElement) {
+  commentsElement.textContent = photo.comments.length;
+}
+
 // ---------- СТАРТ ----------
 getData()
   .then((photos) => {
-    renderThumbnails(photos);          // pinta default
-    initFilters(photos, renderThumbnails); // activa filtros + debounce
+    renderThumbnails(photos);
+    initFilters(photos, renderThumbnails);
   })
   .catch(() => {
     showDataError();
